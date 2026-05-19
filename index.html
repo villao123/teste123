@@ -527,153 +527,129 @@ function mostrarSaida(){
 // ── gerar word
 function gerarWord(){
   if(!dados){toast('Preencha o formulário primeiro.','err');return;}
-  if(typeof docx==='undefined'){toast('Biblioteca Word não carregou. Verifique se docx.js está na mesma pasta.','err');return;}
+  if(typeof docx==='undefined'){toast('Biblioteca Word não carregou. Verifique se docx.js está na pasta.','err');return;}
   const d=dados;
   const{Document,Packer,Paragraph,TextRun,Table,TableRow,TableCell,
-    AlignmentType,BorderStyle,WidthType,ShadingType,VerticalAlign}=docx;
-
-  const AZ='1F3864',CZ='F2F2F2',BR='FFFFFF';
-  const brd=(c='CCCCCC')=>({style:BorderStyle.SINGLE,size:4,color:c});
-  const brds=(c='CCCCCC')=>({top:brd(c),bottom:brd(c),left:brd(c),right:brd(c)});
-
-  const cel=(txt,o={})=>new TableCell({
-    borders:brds(o.bc||'CCCCCC'),
+    AlignmentType,BorderStyle,WidthType,ShadingType,VerticalAlign,ImageRun,Header}=docx;
+  const AZ='1F3864',CZ='D9D9D9',BR='FFFFFF',BK='000000',CW=10456;
+  const LOGO_B64='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';
+  const logoBuffer=Uint8Array.from(atob(LOGO_B64),function(c){return c.charCodeAt(0);});
+  const brd=function(c,sz){c=c||'000000';sz=sz||4;return{style:BorderStyle.SINGLE,size:sz,color:c};};
+  const brds=function(c,sz){var b=brd(c,sz);return{top:b,bottom:b,left:b,right:b};};
+  function cel(txt,o){o=o||{};return new TableCell({
+    borders:o.borders||brds(o.bc||'000000',o.bsz||4),
     width:{size:o.w||4680,type:WidthType.DXA},
     shading:o.sh?{fill:o.sh,type:ShadingType.CLEAR}:undefined,
-    verticalAlign:VerticalAlign.CENTER,
-    margins:{top:80,bottom:80,left:140,right:140},
-    columnSpan:o.span, rowSpan:o.rs,
-    children:[new Paragraph({
-      alignment:o.al||AlignmentType.LEFT,
-      children:[new TextRun({text:String(txt||''),font:'Calibri',size:o.sz||20,bold:o.b||false,color:o.co||'000000'})]
-    })]
-  });
-  const celH=(txt,span=1)=>new TableCell({
-    borders:brds(AZ),width:{size:9360,type:WidthType.DXA},
-    shading:{fill:AZ,type:ShadingType.CLEAR},
-    verticalAlign:VerticalAlign.CENTER,
-    margins:{top:100,bottom:100,left:140,right:140},columnSpan:span,
-    children:[new Paragraph({alignment:AlignmentType.LEFT,
-      children:[new TextRun({text:txt,font:'Calibri',size:22,bold:true,color:BR})]})]
-  });
-  const rH=(txt,s=2)=>new TableRow({children:[celH(txt,s)]});
-  const rS=(l,v,lw=2340,vw=7020)=>new TableRow({children:[cel(l,{w:lw,sh:CZ,b:true}),cel(v,{w:vw})]});
-  const rD=(l1,v1,l2,v2)=>new TableRow({children:[cel(l1,{w:2340,sh:CZ,b:true}),cel(v1,{w:2340}),cel(l2,{w:2340,sh:CZ,b:true}),cel(v2,{w:2340})]});
-  const rT=(txt)=>new TableRow({height:{value:1000,rule:'atLeast'},children:[new TableCell({
-    borders:brds(),width:{size:9360,type:WidthType.DXA},columnSpan:2,
-    margins:{top:100,bottom:100,left:140,right:140},
-    children:[new Paragraph({children:[new TextRun({text:txt||'n/a',font:'Calibri',size:20})]})]
-  })]});
-  const rI=(l,v)=>new TableRow({children:[cel(l,{w:3120,sh:CZ,b:true}),cel(v||'n/a',{w:6240})]});
-  const sp=(pts=160)=>new Paragraph({spacing:{before:0,after:pts},children:[]});
-  const cf=d.custo&&d.custo!=='n/a'?'R$ '+parseFloat(d.custo).toLocaleString('pt-BR',{minimumFractionDigits:2}):'n/a';
-  const cA=d.resultado==='aprovado'?'☒':'☐';
-  const cR=d.resultado==='reprovado'?'☒':'☐';
-
-  const docFile=new Document({
-    styles:{default:{document:{run:{font:'Calibri',size:20}}}},
-    sections:[{
-      properties:{page:{size:{width:12240,height:15840},margin:{top:720,right:720,bottom:720,left:720}}},
-      children:[
-        new Table({width:{size:9360,type:WidthType.DXA},columnWidths:[1560,6240,1560],rows:[
-          new TableRow({children:[
-            new TableCell({borders:brds(AZ),width:{size:1560,type:WidthType.DXA},rowSpan:2,
-              verticalAlign:VerticalAlign.CENTER,margins:{top:80,bottom:80,left:100,right:100},
-              children:[new Paragraph({alignment:AlignmentType.CENTER,children:[new TextRun({text:'DB DIAGNÓSTICOS',font:'Calibri',size:16,bold:true,color:AZ})]})]}),
-            new TableCell({borders:brds(AZ),width:{size:6240,type:WidthType.DXA},
-              shading:{fill:AZ,type:ShadingType.CLEAR},verticalAlign:VerticalAlign.CENTER,margins:{top:80,bottom:80,left:140,right:140},
-              children:[new Paragraph({alignment:AlignmentType.CENTER,children:[new TextRun({text:'REGISTRO DA QUALIDADE',font:'Calibri',size:22,bold:true,color:BR})]})]}),
-            new TableCell({borders:brds(AZ),width:{size:1560,type:WidthType.DXA},rowSpan:2,
-              verticalAlign:VerticalAlign.CENTER,margins:{top:80,bottom:80,left:100,right:100},
-              children:[new Paragraph({alignment:AlignmentType.CENTER,children:[new TextRun({text:'VERSÃO: 2',font:'Calibri',size:18,bold:true})]})]}),
-          ]}),
-          new TableRow({children:[
-            new TableCell({borders:brds(AZ),width:{size:6240,type:WidthType.DXA},
-              verticalAlign:VerticalAlign.CENTER,margins:{top:60,bottom:60,left:140,right:140},
-              children:[new Paragraph({alignment:AlignmentType.CENTER,children:[new TextRun({text:'RQ-1018  –  Gestão de Mudanças',font:'Calibri',size:20,bold:true})]})]}),
-          ]}),
+    verticalAlign:o.va||VerticalAlign.CENTER,
+    margins:{top:o.mt||100,bottom:o.mb||100,left:o.ml||120,right:o.mr||120},
+    columnSpan:o.span,rowSpan:o.rs,
+    children:[new Paragraph({alignment:o.al||AlignmentType.LEFT,spacing:{before:0,after:0},
+      children:[new TextRun({text:String(txt||''),font:o.font||'Arial',size:o.sz||20,bold:o.b||false,color:o.co||BK})]})]
+  });}
+  function celH(txt,span,w){span=span||1;w=w||CW;return new TableCell({
+    borders:brds('000000'),width:{size:w,type:WidthType.DXA},
+    shading:{fill:AZ,type:ShadingType.CLEAR},verticalAlign:VerticalAlign.CENTER,
+    margins:{top:100,bottom:100,left:120,right:120},columnSpan:span,
+    children:[new Paragraph({alignment:AlignmentType.LEFT,spacing:{before:0,after:0},
+      children:[new TextRun({text:txt,font:'Arial',size:22,bold:true,color:BR})]})]
+  });}
+  function rH(txt,span,w){return new TableRow({children:[celH(txt,span,w)]});}
+  function rS(l,v){return new TableRow({children:[
+    cel(l,{w:2641,sh:CZ,b:true,sz:20}),cel(v,{w:7815,sz:20})]});}
+  function rT(txt){return new TableRow({height:{value:1000,rule:'atLeast'},children:[new TableCell({
+    borders:brds('000000'),width:{size:CW,type:WidthType.DXA},columnSpan:2,
+    margins:{top:100,bottom:100,left:120,right:120},
+    children:[new Paragraph({spacing:{before:0,after:0},
+      children:[new TextRun({text:String(txt||'n/a'),font:'Arial',size:20})]})]
+  })]}); }
+  function rI(l,v){return new TableRow({children:[
+    cel(l,{w:2972,sh:CZ,b:true,sz:20}),cel(v||'n/a',{w:7484,sz:20})]});}
+  function sp(pts){pts=pts||120;return new Paragraph({spacing:{before:0,after:pts},children:[]});}
+  var cf=d.custo&&d.custo!=='n/a'?'R$ '+parseFloat(d.custo).toLocaleString('pt-BR',{minimumFractionDigits:2}):'n/a';
+  var cA=d.resultado==='aprovado'?'\u2612':'\u2610';
+  var cR=d.resultado==='reprovado'?'\u2612':'\u2610';
+  var docFile=new Document({
+    styles:{default:{document:{run:{font:'Arial',size:20}}}},
+    sections:[{properties:{page:{size:{width:11906,height:16838},margin:{top:166,right:720,bottom:720,left:720,header:708}}},
+    headers:{default:new Header({children:[
+      new Table({width:{size:CW,type:WidthType.DXA},columnWidths:[2131,8325],rows:[
+        new TableRow({children:[
+          new TableCell({borders:brds(),width:{size:2131,type:WidthType.DXA},verticalAlign:VerticalAlign.CENTER,
+            margins:{top:60,bottom:60,left:80,right:80},rowSpan:2,
+            children:[new Paragraph({alignment:AlignmentType.CENTER,spacing:{before:0,after:0},
+              children:[new ImageRun({data:logoBuffer,transformation:{width:95,height:44},type:'png'})]})]}),          new TableCell({borders:brds(),width:{size:8325,type:WidthType.DXA},
+            shading:{fill:'F2F2F2',type:ShadingType.CLEAR},verticalAlign:VerticalAlign.CENTER,
+            margins:{top:60,bottom:60,left:120,right:120},
+            children:[new Paragraph({alignment:AlignmentType.CENTER,spacing:{before:0,after:0},
+              children:[new TextRun({text:'REGISTRO DA QUALIDADE',font:'Arial',size:22,bold:true})]})]}),
         ]}),
-        sp(200),
-        new Paragraph({alignment:AlignmentType.CENTER,spacing:{after:200},children:[new TextRun({text:'Formulário de Gestão de Mudanças',font:'Calibri',size:26,bold:true})]}),
-        new Table({width:{size:9360,type:WidthType.DXA},columnWidths:[2340,7020],rows:[
-          rH('Informações do Projeto'),
-          rS('Nome do projeto',d.projeto),
-          rS('Solicitante da mudança',d.solicitante),
-          rS('Aprovador (Sponsor)',d.aprovador),
-          rS('Gerente de Projeto – DB',d.gp),
-          rS('Data da solicitação',d.data),
-        ]}),sp(160),
-        new Table({width:{size:9360,type:WidthType.DXA},columnWidths:[2340,2340,2340,2340],rows:[
-          new TableRow({children:[celH('Classificação da Mudança',4)]}),
-          rD('Prioridade',d.prioridade,'Tipo de mudança',d.tipo),
-          rD('Impede implantação?',d.impede,'Responsável',d.responsavel),
-        ]}),sp(160),
-        new Table({width:{size:9360,type:WidthType.DXA},columnWidths:[9360],rows:[
-          new TableRow({children:[celH('Descrição da Solicitação da Mudança')]}),
-          rT(d.descricao),
-        ]}),sp(160),
-        new Table({width:{size:9360,type:WidthType.DXA},columnWidths:[9360],rows:[
-          new TableRow({children:[celH('Justificativa(s) da Mudança')]}),
-          rT(d.justificativa),
-        ]}),sp(160),
-        new Table({width:{size:9360,type:WidthType.DXA},columnWidths:[9360],rows:[
-          new TableRow({children:[celH('Alternativas')]}),
-          rT(d.alternativas),
-        ]}),sp(160),
-        new Table({width:{size:9360,type:WidthType.DXA},columnWidths:[3120,6240],rows:[
-          new TableRow({children:[celH('Avaliação dos Impactos da Mudança',2)]}),
-          rI('Riscos identificados',d.riscos),
-          rI('Impacto no prazo (dias)',d.prazo==='n/a'?'n/a':d.prazo+' dias'),
-          rI('Impacto no custo (R$)',cf),
-          rI('Esforço estimado (horas)',d.esforco==='n/a'?'n/a':d.esforco+' h'),
-          rI('Impacto no escopo da solução',d.escopo),
-          rI('Impacto na qualidade',d.qualidade),
-          rI('Impacto em outros projetos',d.outros),
-          rI('Impactos diversos no projeto',d.diversos),
-        ]}),sp(160),
-        new Table({width:{size:9360,type:WidthType.DXA},columnWidths:[520,2080,6760],rows:[
-          new TableRow({children:[celH('Resultado da Avaliação',3)]}),
-          new TableRow({children:[cel(cA,{w:520,b:true,al:AlignmentType.CENTER}),cel('Aprovado',{w:2080,sh:CZ,b:true}),cel(d.resultado==='aprovado'?d.obs||'Aprovado.':'',{w:6760})]}),
-          new TableRow({children:[cel(cR,{w:520,al:AlignmentType.CENTER}),cel('Reprovado',{w:2080,sh:CZ,b:true}),cel(d.resultado==='reprovado'?d.obs||'':' ',{w:6760})]}),
-        ]}),sp(160),
-        new Table({width:{size:9360,type:WidthType.DXA},columnWidths:[2340,1170,3510,2340],rows:[
-          new TableRow({children:[celH('Histórico de Revisões',4)]}),
-          new TableRow({children:[
-            cel('Data',{w:2340,sh:CZ,b:true,al:AlignmentType.CENTER}),
-            cel('Versão',{w:1170,sh:CZ,b:true,al:AlignmentType.CENTER}),
-            cel('Descrição',{w:3510,sh:CZ,b:true}),
-            cel('Autor',{w:2340,sh:CZ,b:true}),
-          ]}),
-          new TableRow({children:[
-            cel(d.data,{w:2340,al:AlignmentType.CENTER}),
-            cel('1',{w:1170,al:AlignmentType.CENTER}),
-            cel('Solicitação de mudança – '+d.tipo,{w:3510}),
-            cel(d.gp,{w:2340}),
-          ]}),
-        ]}),sp(160),
-        new Table({width:{size:9360,type:WidthType.DXA},columnWidths:[2340,2340,2340,2340],rows:[
-          new TableRow({children:[celH('Aprovações',4)]}),
-          new TableRow({children:[cel('Nome',{w:2340,sh:CZ,b:true}),cel('Empresa/Área',{w:2340,sh:CZ,b:true}),cel('Data',{w:2340,sh:CZ,b:true}),cel('Assinatura',{w:2340,sh:CZ,b:true})]}),
-          new TableRow({height:{value:700,rule:'atLeast'},children:[cel('',{w:2340}),cel('',{w:2340}),cel('',{w:2340}),cel('',{w:2340})]}),
-        ]}),sp(200),
-        new Paragraph({alignment:AlignmentType.CENTER,children:[new TextRun({text:'Página 1 de 1  ·  Referente à IT-0292 Escritório de Projetos  ·  Versão 2',font:'Calibri',size:16,color:'888888'})]}),
-      ]
-    }]
+        new TableRow({children:[
+          new TableCell({borders:brds(),width:{size:8325,type:WidthType.DXA},
+            verticalAlign:VerticalAlign.CENTER,margins:{top:60,bottom:60,left:120,right:120},
+            children:[new Paragraph({alignment:AlignmentType.CENTER,spacing:{before:0,after:0},
+              children:[new TextRun({text:'RQ-1018 Gestão de Mudanças',font:'Arial',size:20,bold:true})]})]}),
+        ]}),
+      ]})
+    ]})},
+    children:[
+      new Paragraph({alignment:AlignmentType.LEFT,spacing:{before:160,after:160},
+        children:[new TextRun({text:'Formulário da Gestão de Mudanças',font:'Arial',size:32,bold:true})]}),
+      new Table({width:{size:CW,type:WidthType.DXA},columnWidths:[2641,7815],rows:[
+        rH('Informações do Projeto',2,CW),
+        rS('Nome do projeto',d.projeto),rS('Solicitante da mudança',d.solicitante),
+        rS('Aprovador',d.aprovador),rS('Gerente de Projeto - DB',d.gp),rS('Data da solicitação',d.data),
+      ]}),sp(),
+      new Table({width:{size:CW,type:WidthType.DXA},columnWidths:[CW],rows:[
+        new TableRow({children:[celH('Descrição da solicitação da mudança',1,CW)]}),rT(d.descricao)]}),sp(),
+      new Table({width:{size:CW,type:WidthType.DXA},columnWidths:[CW],rows:[
+        new TableRow({children:[celH('Justificativa(s) da mudança',1,CW)]}),rT(d.justificativa)]}),sp(),
+      new Table({width:{size:CW,type:WidthType.DXA},columnWidths:[CW],rows:[
+        new TableRow({children:[celH('Alternativas',1,CW)]}),rT(d.alternativas||'n/a')]}),sp(),
+      new Table({width:{size:CW,type:WidthType.DXA},columnWidths:[2972,7484],rows:[
+        new TableRow({children:[celH('Avaliação dos impactos da mudança',2,CW)]}),
+        rI('Riscos identificados:',d.riscos),
+        rI('Impactos no cronograma (prazo):',d.prazo==='n/a'?'n/a':d.prazo+' dias'),
+        rI('Impactos no custo (R$):',cf),
+        rI('Impactos no escopo da solução:',d.escopo),
+        rI('Impactos na qualidade:',d.qualidade),
+        rI('Impactos em outros projetos:',d.outros),
+        rI('Impactos diversos no projeto:',d.diversos),
+      ]}),sp(),
+      new Table({width:{size:CW,type:WidthType.DXA},columnWidths:[505,1885,8066],rows:[
+        new TableRow({children:[celH('Resultado da avaliação',3,CW)]}),
+        new TableRow({children:[cel(cA,{w:505,b:true,al:AlignmentType.CENTER,sz:20}),cel('Aprovado',{w:1885,sh:CZ,b:true,sz:20}),cel(d.resultado==='aprovado'?d.obs||'':''  ,{w:8066,sz:20})]}),
+        new TableRow({children:[cel(cR,{w:505,al:AlignmentType.CENTER,sz:20}),cel('Reprovado',{w:1885,sh:CZ,b:true,sz:20}),cel(d.resultado==='reprovado'?d.obs||'':''  ,{w:8066,sz:20})]}),
+      ]}),sp(),
+      new Table({width:{size:CW,type:WidthType.DXA},columnWidths:[1578,1059,5087,2732],rows:[
+        new TableRow({children:[celH('Histórico de revisões',4,CW)]}),
+        new TableRow({children:[cel('Data',{w:1578,sh:CZ,b:true,sz:20,al:AlignmentType.CENTER}),cel('Versão',{w:1059,sh:CZ,b:true,sz:20,al:AlignmentType.CENTER}),cel('Descrição',{w:5087,sh:CZ,b:true,sz:20}),cel('Autor',{w:2732,sh:CZ,b:true,sz:20})]}),
+        new TableRow({children:[cel(d.data,{w:1578,sz:20,al:AlignmentType.CENTER}),cel('1',{w:1059,sz:20,al:AlignmentType.CENTER}),cel('Solicitação de mudança – '+d.tipo,{w:5087,sz:20}),cel(d.gp,{w:2732,sz:20})]}),
+      ]}),sp(),
+      new Table({width:{size:CW,type:WidthType.DXA},columnWidths:[1838,1701,1985,4932],rows:[
+        new TableRow({children:[celH('Aprovações',4,CW)]}),
+        new TableRow({children:[cel('Nome',{w:1838,sh:CZ,b:true,sz:20}),cel('Empresa/Área',{w:1701,sh:CZ,b:true,sz:20}),cel('Data',{w:1985,sh:CZ,b:true,sz:20}),cel('Assinatura',{w:4932,sh:CZ,b:true,sz:20})]}),
+        new TableRow({height:{value:800,rule:'atLeast'},children:[cel('',{w:1838}),cel('',{w:1701}),cel('',{w:1985}),cel('',{w:4932})]}),
+      ]}),
+      sp(200),
+      new Paragraph({alignment:AlignmentType.CENTER,spacing:{before:0,after:0},children:[
+        new TextRun({text:'Página ',font:'Arial',size:18,color:'666666'}),
+        new TextRun({text:'2',font:'Arial',size:18,bold:true,color:'666666'}),
+        new TextRun({text:' de ',font:'Arial',size:18,color:'666666'}),
+        new TextRun({text:'2',font:'Arial',size:18,bold:true,color:'666666'}),
+        new TextRun({text:'                                      Referente à IT-0292 Escritório de Projetos                                                    Versão 2',font:'Arial',size:18,color:'666666'}),
+      ]}),
+    ]}]
   });
-
-  Packer.toBlob(docFile).then(blob=>{
-    const url=URL.createObjectURL(blob);
-    const a=document.createElement('a');
+  Packer.toBlob(docFile).then(function(blob){
+    var url=URL.createObjectURL(blob);
+    var a=document.createElement('a');
     a.href=url;
     a.download='RQ-1018_'+d.projeto.replace(/\s+/g,'_')+'_'+d.data+'.docx';
-    document.body.appendChild(a); a.click();
+    document.body.appendChild(a);a.click();
     document.body.removeChild(a);
     URL.revokeObjectURL(url);
     toast('Word gerado com sucesso!','ok');
-  }).catch(e=>{
-    console.error(e);
-    toast('Erro ao gerar Word: '+e.message,'err');
-  });
+  }).catch(function(e){console.error(e);toast('Erro ao gerar Word: '+e.message,'err');});
 }
 
 // data padrão
