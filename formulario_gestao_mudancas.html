@@ -1,0 +1,884 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>RQ-1018 · Gestão de Mudanças</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/docx/8.5.0/docx.umd.min.js"></script>
+<style>
+:root {
+  --azul:      #1F3864;
+  --azul-md:   #2E5FAC;
+  --azul-lt:   #E8EEF8;
+  --accent:    #2E5FAC;
+  --ok:        #1a7a4a;
+  --ok-bg:     #e6f4ed;
+  --warn:      #b45309;
+  --warn-bg:   #fef3c7;
+  --err:       #b91c1c;
+  --err-bg:    #fee2e2;
+  --border:    #dde3ed;
+  --bg:        #f4f6fb;
+  --surface:   #ffffff;
+  --text:      #0f1c35;
+  --muted:     #5a6a85;
+  --radius:    10px;
+  --shadow:    0 2px 12px rgba(31,56,100,.08);
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;padding:32px 16px 64px;}
+
+/* ── LAYOUT ── */
+.shell{max-width:780px;margin:0 auto;}
+
+/* ── TOPBAR ── */
+.topbar{display:flex;align-items:center;justify-content:space-between;margin-bottom:28px;}
+.logo{display:flex;align-items:center;gap:10px;}
+.logo-mark{width:36px;height:36px;background:var(--azul);border-radius:8px;display:flex;align-items:center;justify-content:center;}
+.logo-mark svg{width:20px;height:20px;fill:none;stroke:#fff;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;}
+.logo-text{font-size:13px;font-weight:600;color:var(--azul);line-height:1.2;}
+.logo-sub{font-size:11px;color:var(--muted);font-weight:400;}
+.rq-badge{font-family:'DM Mono',monospace;font-size:11px;color:var(--muted);background:var(--azul-lt);padding:4px 10px;border-radius:20px;border:1px solid var(--border);}
+
+/* ── PROGRESS ── */
+.progress-wrap{margin-bottom:28px;}
+.steps-row{display:flex;align-items:center;gap:0;margin-bottom:10px;}
+.step-item{display:flex;align-items:center;gap:0;flex:1;}
+.step-item:last-child{flex:0;}
+.step-dot{width:28px;height:28px;border-radius:50%;border:2px solid var(--border);background:var(--surface);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:600;color:var(--muted);transition:all .3s;flex-shrink:0;cursor:pointer;}
+.step-dot.active{border-color:var(--azul);background:var(--azul);color:#fff;}
+.step-dot.done{border-color:var(--ok);background:var(--ok);color:#fff;}
+.step-dot.done::after{content:'✓';}
+.step-dot.done span{display:none;}
+.step-line{flex:1;height:2px;background:var(--border);transition:background .3s;}
+.step-line.done{background:var(--ok);}
+.step-labels{display:flex;justify-content:space-between;}
+.step-label{font-size:11px;color:var(--muted);font-weight:500;text-align:center;width:28px;}
+.step-label.active{color:var(--azul);}
+.step-label.done{color:var(--ok);}
+
+/* ── CARD ── */
+.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);box-shadow:var(--shadow);overflow:hidden;margin-bottom:16px;}
+.card-head{background:var(--azul);padding:14px 20px;display:flex;align-items:center;gap:10px;}
+.card-head h2{font-size:13px;font-weight:600;color:#fff;letter-spacing:.02em;}
+.card-head .step-tag{font-family:'DM Mono',monospace;font-size:10px;color:rgba(255,255,255,.6);background:rgba(255,255,255,.12);padding:2px 8px;border-radius:12px;margin-left:auto;}
+.card-body{padding:20px;}
+
+/* ── FIELDS ── */
+.grid{display:grid;gap:14px;}
+.g2{grid-template-columns:1fr 1fr;}
+.g3{grid-template-columns:1fr 1fr 1fr;}
+.span2{grid-column:1/-1;}
+.field{display:flex;flex-direction:column;gap:5px;}
+.field label{font-size:12px;font-weight:600;color:var(--muted);letter-spacing:.03em;}
+.field label .req{color:var(--err);margin-left:2px;}
+input,select,textarea{font-family:'DM Sans',sans-serif;font-size:14px;color:var(--text);background:var(--surface);border:1.5px solid var(--border);border-radius:8px;padding:9px 12px;transition:border .2s,box-shadow .2s;width:100%;}
+input:focus,select:focus,textarea:focus{outline:none;border-color:var(--azul-md);box-shadow:0 0 0 3px rgba(46,95,172,.12);}
+textarea{resize:vertical;min-height:80px;line-height:1.5;}
+.field-hint{font-size:11px;color:var(--muted);margin-top:2px;}
+
+/* ── PILLS (prioridade / tipo) ── */
+.pills{display:flex;flex-wrap:wrap;gap:6px;}
+.pill{padding:6px 14px;border-radius:20px;border:1.5px solid var(--border);font-size:12px;font-weight:500;cursor:pointer;background:var(--surface);color:var(--muted);transition:all .2s;user-select:none;}
+.pill:hover{border-color:var(--azul-md);color:var(--azul);}
+.pill.p0.sel{background:#fee2e2;border-color:#fca5a5;color:#b91c1c;}
+.pill.p1.sel{background:#fef3c7;border-color:#fcd34d;color:#b45309;}
+.pill.p2.sel{background:#dbeafe;border-color:#93c5fd;color:#1d4ed8;}
+.pill.p3.sel{background:#dcfce7;border-color:#86efac;color:#166534;}
+.pill.p4.sel{background:#f3f4f6;border-color:#d1d5db;color:#374151;}
+.pill.tipo.sel{background:var(--azul-lt);border-color:var(--azul-md);color:var(--azul);}
+
+/* ── TOGGLE ── */
+.toggle-wrap{display:flex;align-items:center;gap:10px;padding:10px 0;}
+.toggle-track{width:40px;height:22px;border-radius:11px;background:#d1d5db;position:relative;cursor:pointer;transition:background .2s;flex-shrink:0;}
+.toggle-track.on{background:var(--azul);}
+.toggle-thumb{width:18px;height:18px;border-radius:50%;background:#fff;position:absolute;top:2px;left:2px;transition:transform .2s;box-shadow:0 1px 4px rgba(0,0,0,.2);}
+.toggle-track.on .toggle-thumb{transform:translateX(18px);}
+.toggle-label{font-size:14px;color:var(--text);}
+
+/* ── IMPACTO CARDS ── */
+.impacto-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+.impacto-card{background:var(--azul-lt);border:1px solid var(--border);border-radius:8px;padding:12px 14px;}
+.impacto-card label{display:block;font-size:11px;font-weight:600;color:var(--muted);margin-bottom:6px;letter-spacing:.03em;}
+.impacto-card input,.impacto-card textarea{background:#fff;font-size:13px;}
+.impacto-full{grid-column:1/-1;}
+
+/* ── RESULTADO ── */
+.resultado-opts{display:flex;gap:10px;}
+.resultado-opt{flex:1;border:2px solid var(--border);border-radius:8px;padding:12px 16px;cursor:pointer;transition:all .2s;text-align:center;}
+.resultado-opt.aprovado.sel{border-color:var(--ok);background:var(--ok-bg);}
+.resultado-opt.reprovado.sel{border-color:var(--err);background:var(--err-bg);}
+.resultado-opt .opt-icon{font-size:20px;margin-bottom:4px;}
+.resultado-opt .opt-label{font-size:13px;font-weight:600;}
+.resultado-opt.aprovado.sel .opt-label{color:var(--ok);}
+.resultado-opt.reprovado.sel .opt-label{color:var(--err);}
+
+/* ── FOOTER ACTIONS ── */
+.actions{display:flex;justify-content:space-between;align-items:center;padding-top:8px;}
+.btn{display:inline-flex;align-items:center;gap:8px;padding:10px 22px;border-radius:8px;font-family:'DM Sans',sans-serif;font-size:14px;font-weight:600;cursor:pointer;transition:all .2s;border:none;}
+.btn-ghost{background:transparent;color:var(--muted);border:1.5px solid var(--border);}
+.btn-ghost:hover{border-color:var(--azul-md);color:var(--azul);}
+.btn-primary{background:var(--azul);color:#fff;}
+.btn-primary:hover{background:#162d55;transform:translateY(-1px);}
+.btn-primary:disabled{background:#93a8c8;cursor:not-allowed;transform:none;}
+.btn-success{background:var(--ok);color:#fff;}
+.btn-success:hover{background:#155e38;}
+
+/* ── PAINÉIS ── */
+.pane{display:none;animation:fadeIn .25s ease;}
+.pane.active{display:block;}
+@keyframes fadeIn{from{opacity:0;transform:translateY(6px);}to{opacity:1;transform:none;}}
+
+/* ── SAÍDA FINAL ── */
+.output-box{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);box-shadow:var(--shadow);overflow:hidden;}
+.output-head{background:linear-gradient(135deg,var(--azul) 0%,var(--azul-md) 100%);padding:24px;text-align:center;color:#fff;}
+.output-head h2{font-size:18px;font-weight:600;margin-bottom:4px;}
+.output-head p{font-size:13px;opacity:.8;}
+.output-body{padding:24px;}
+.output-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:20px;}
+.output-card{border:1px solid var(--border);border-radius:8px;padding:16px;text-align:center;}
+.output-card .oc-icon{width:44px;height:44px;border-radius:10px;display:flex;align-items:center;justify-content:center;margin:0 auto 10px;font-size:22px;}
+.output-card .oc-icon.green{background:var(--ok-bg);}
+.output-card .oc-icon.blue{background:var(--azul-lt);}
+.output-card h3{font-size:13px;font-weight:600;margin-bottom:4px;}
+.output-card p{font-size:12px;color:var(--muted);line-height:1.5;margin-bottom:12px;}
+.output-card .oc-status{font-size:11px;font-weight:600;padding:4px 10px;border-radius:20px;display:inline-block;}
+.output-card .oc-status.ok{background:var(--ok-bg);color:var(--ok);}
+.output-card .oc-status.btn-dl{background:var(--azul-lt);color:var(--azul);cursor:pointer;border:1px solid var(--azul-md);}
+.output-card .oc-status.btn-dl:hover{background:var(--azul);color:#fff;}
+.sheets-preview{background:var(--azul-lt);border:1px solid var(--border);border-radius:8px;padding:14px;font-family:'DM Mono',monospace;font-size:11px;color:var(--azul);overflow-x:auto;white-space:nowrap;line-height:2;}
+.sheets-preview .sh-head{font-weight:600;color:var(--azul);border-bottom:1px solid var(--border);padding-bottom:6px;margin-bottom:6px;}
+
+/* ── TOAST ── */
+#toast{position:fixed;bottom:24px;right:24px;background:var(--text);color:#fff;padding:12px 20px;border-radius:10px;font-size:13px;font-weight:500;transform:translateY(80px);opacity:0;transition:all .3s;z-index:999;max-width:320px;}
+#toast.show{transform:translateY(0);opacity:1;}
+#toast.ok-toast{background:var(--ok);}
+#toast.err-toast{background:var(--err);}
+
+/* ── SPINNER ── */
+.spinner{width:16px;height:16px;border:2px solid rgba(255,255,255,.3);border-top-color:#fff;border-radius:50%;animation:spin .6s linear infinite;display:inline-block;}
+@keyframes spin{to{transform:rotate(360deg);}}
+
+@media(max-width:560px){
+  .g2,.g3,.impacto-grid,.output-grid{grid-template-columns:1fr;}
+  .resultado-opts{flex-direction:column;}
+}
+</style>
+</head>
+<body>
+<div class="shell">
+
+  <!-- TOPBAR -->
+  <div class="topbar">
+    <div class="logo">
+      <div class="logo-mark">
+        <svg viewBox="0 0 24 24"><path d="M9 12l2 2 4-4"/><rect x="3" y="3" width="18" height="18" rx="3"/></svg>
+      </div>
+      <div>
+        <div class="logo-text">DB Diagnósticos</div>
+        <div class="logo-sub">Escritório de Projetos · PMO</div>
+      </div>
+    </div>
+    <div class="rq-badge">RQ-1018 · RQ-1134</div>
+  </div>
+
+  <!-- PROGRESS -->
+  <div class="progress-wrap">
+    <div class="steps-row">
+      <div class="step-item">
+        <div class="step-dot active" id="dot0" onclick="tryGoStep(0)"><span>1</span></div>
+        <div class="step-line" id="line0"></div>
+      </div>
+      <div class="step-item">
+        <div class="step-dot" id="dot1" onclick="tryGoStep(1)"><span>2</span></div>
+        <div class="step-line" id="line1"></div>
+      </div>
+      <div class="step-item">
+        <div class="step-dot" id="dot2" onclick="tryGoStep(2)"><span>3</span></div>
+        <div class="step-line" id="line2"></div>
+      </div>
+      <div class="step-item">
+        <div class="step-dot" id="dot3" onclick="tryGoStep(3)"><span>4</span></div>
+      </div>
+    </div>
+    <div class="step-labels">
+      <div class="step-label active" id="lbl0">Projeto</div>
+      <div class="step-label" id="lbl1">Mudança</div>
+      <div class="step-label" id="lbl2">Impactos</div>
+      <div class="step-label" id="lbl3">Resultado</div>
+    </div>
+  </div>
+
+  <!-- ══ PASSO 1: PROJETO ══ -->
+  <div class="pane active" id="pane0">
+    <div class="card">
+      <div class="card-head">
+        <h2>Informações do Projeto</h2>
+        <span class="step-tag">Passo 1 de 4</span>
+      </div>
+      <div class="card-body">
+        <div class="grid g2">
+          <div class="field span2">
+            <label>Nome do Projeto <span class="req">*</span></label>
+            <input type="text" id="f-projeto" placeholder="Ex: Ampliação da UP GO">
+          </div>
+          <div class="field">
+            <label>Gerente de Projeto (GP) <span class="req">*</span></label>
+            <input type="text" id="f-gp" placeholder="Seu nome completo">
+          </div>
+          <div class="field">
+            <label>Data da Solicitação <span class="req">*</span></label>
+            <input type="date" id="f-data">
+          </div>
+          <div class="field">
+            <label>Solicitante da Mudança <span class="req">*</span></label>
+            <input type="text" id="f-solicitante" placeholder="Nome de quem pediu">
+          </div>
+          <div class="field">
+            <label>Aprovador (Sponsor) <span class="req">*</span></label>
+            <input type="text" id="f-aprovador" placeholder="Nome do aprovador">
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-head"><h2>Classificação da Mudança</h2></div>
+      <div class="card-body">
+        <div class="grid">
+          <div class="field">
+            <label>Prioridade <span class="req">*</span></label>
+            <div class="pills" id="prio-pills">
+              <div class="pill p0" onclick="selPill(this,'prio')">0 – Altíssima</div>
+              <div class="pill p1" onclick="selPill(this,'prio')">1 – Alta</div>
+              <div class="pill p2" onclick="selPill(this,'prio')">2 – Média</div>
+              <div class="pill p3" onclick="selPill(this,'prio')">3 – Baixa</div>
+              <div class="pill p4" onclick="selPill(this,'prio')">4 – Muito baixa</div>
+            </div>
+          </div>
+          <div class="field">
+            <label>Tipo de Mudança <span class="req">*</span> <span class="field-hint" style="font-weight:400;">(pode selecionar mais de um)</span></label>
+            <div class="pills" id="tipo-pills">
+              <div class="pill tipo" onclick="selPillMulti(this)">Custo</div>
+              <div class="pill tipo" onclick="selPillMulti(this)">Prazo</div>
+              <div class="pill tipo" onclick="selPillMulti(this)">Escopo</div>
+              <div class="pill tipo" onclick="selPillMulti(this)">Tempo</div>
+            </div>
+          </div>
+          <div class="field">
+            <label>Impede Implantação?</label>
+            <div class="toggle-wrap">
+              <div class="toggle-track" id="toggle-impede" onclick="toggleImpede()">
+                <div class="toggle-thumb"></div>
+              </div>
+              <span class="toggle-label" id="toggle-label">Não</span>
+            </div>
+          </div>
+          <div class="field">
+            <label>Responsável pela Mudança</label>
+            <input type="text" id="f-responsavel" placeholder="Nome do responsável">
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="actions">
+      <span></span>
+      <button class="btn btn-primary" onclick="nextStep(0)">Próximo →</button>
+    </div>
+  </div>
+
+  <!-- ══ PASSO 2: MUDANÇA ══ -->
+  <div class="pane" id="pane1">
+    <div class="card">
+      <div class="card-head">
+        <h2>Descrição da Mudança</h2>
+        <span class="step-tag">Passo 2 de 4</span>
+      </div>
+      <div class="card-body">
+        <div class="grid">
+          <div class="field">
+            <label>Descrição da Solicitação <span class="req">*</span></label>
+            <textarea id="f-descricao" rows="4" placeholder="Descreva o que está sendo solicitado e por que surgiu a necessidade..."></textarea>
+          </div>
+          <div class="field">
+            <label>Justificativa <span class="req">*</span></label>
+            <textarea id="f-justificativa" rows="4" placeholder="Por que essa mudança é necessária para o projeto?"></textarea>
+          </div>
+          <div class="field">
+            <label>Alternativas Consideradas</label>
+            <textarea id="f-alternativas" rows="3" placeholder="Quais alternativas foram avaliadas antes dessa decisão? (ou 'n/a')"></textarea>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="actions">
+      <button class="btn btn-ghost" onclick="prevStep(1)">← Voltar</button>
+      <button class="btn btn-primary" onclick="nextStep(1)">Próximo →</button>
+    </div>
+  </div>
+
+  <!-- ══ PASSO 3: IMPACTOS ══ -->
+  <div class="pane" id="pane2">
+    <div class="card">
+      <div class="card-head">
+        <h2>Avaliação dos Impactos</h2>
+        <span class="step-tag">Passo 3 de 4</span>
+      </div>
+      <div class="card-body">
+        <div class="impacto-grid">
+          <div class="impacto-card">
+            <label>Impacto no Custo (R$)</label>
+            <input type="number" id="f-custo" placeholder="0,00" step="0.01">
+          </div>
+          <div class="impacto-card">
+            <label>Impacto no Prazo (dias)</label>
+            <input type="number" id="f-prazo" placeholder="0">
+          </div>
+          <div class="impacto-card">
+            <label>Esforço Estimado (horas)</label>
+            <input type="number" id="f-esforco" placeholder="0">
+          </div>
+          <div class="impacto-card">
+            <label>Riscos Identificados</label>
+            <input type="text" id="f-riscos" placeholder="Ex: Não entrega do projeto">
+          </div>
+          <div class="impacto-card">
+            <label>Impacto no Escopo</label>
+            <input type="text" id="f-escopo" placeholder="Descreva ou 'n/a'">
+          </div>
+          <div class="impacto-card">
+            <label>Impacto na Qualidade</label>
+            <input type="text" id="f-qualidade" placeholder="Descreva ou 'n/a'">
+          </div>
+          <div class="impacto-card">
+            <label>Impacto em Outros Projetos</label>
+            <input type="text" id="f-outros" placeholder="Descreva ou 'n/a'">
+          </div>
+          <div class="impacto-card">
+            <label>Impactos Diversos</label>
+            <input type="text" id="f-diversos" placeholder="Descreva ou 'n/a'">
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="actions">
+      <button class="btn btn-ghost" onclick="prevStep(2)">← Voltar</button>
+      <button class="btn btn-primary" onclick="nextStep(2)">Próximo →</button>
+    </div>
+  </div>
+
+  <!-- ══ PASSO 4: RESULTADO ══ -->
+  <div class="pane" id="pane3">
+    <div class="card">
+      <div class="card-head">
+        <h2>Resultado da Avaliação</h2>
+        <span class="step-tag">Passo 4 de 4</span>
+      </div>
+      <div class="card-body">
+        <div class="grid">
+          <div class="field">
+            <label>Status da Mudança <span class="req">*</span></label>
+            <div class="resultado-opts">
+              <div class="resultado-opt aprovado" id="opt-aprovado" onclick="selResultado('aprovado')">
+                <div class="opt-icon">✅</div>
+                <div class="opt-label">Aprovado</div>
+              </div>
+              <div class="resultado-opt pendente" id="opt-pendente" onclick="selResultado('pendente')" style="border-color:var(--border);">
+                <div class="opt-icon">⏳</div>
+                <div class="opt-label" style="color:var(--muted);">Pendente</div>
+              </div>
+              <div class="resultado-opt reprovado" id="opt-reprovado" onclick="selResultado('reprovado')">
+                <div class="opt-icon">❌</div>
+                <div class="opt-label">Reprovado</div>
+              </div>
+            </div>
+          </div>
+          <div class="field" id="campo-data-aprov" style="display:none;">
+            <label>Data de Aprovação</label>
+            <input type="date" id="f-data-aprov">
+          </div>
+          <div class="field">
+            <label>Observações da Avaliação</label>
+            <textarea id="f-obs" rows="3" placeholder='Ex: O "de acordo" foi dado via e-mail formal pelo aprovador.'></textarea>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- CONFIGURAÇÃO SHEETS (para teste) -->
+    <div class="card">
+      <div class="card-head"><h2>📋 Destino dos dados (Google Sheets)</h2></div>
+      <div class="card-body">
+        <div class="grid">
+          <div class="field">
+            <label>URL do Google Apps Script (Web App)</label>
+            <input type="url" id="f-sheets-url" placeholder="https://script.google.com/macros/s/SEU_ID/exec">
+            <div class="field-hint">Cole aqui a URL do Apps Script configurado na sua planilha. <strong>Deixe em branco para testar só o Word.</strong></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="actions">
+      <button class="btn btn-ghost" onclick="prevStep(3)">← Voltar</button>
+      <button class="btn btn-primary" id="btn-enviar" onclick="enviarFormulario()">
+        <span id="btn-label">Enviar e Gerar Documentos</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- ══ PASSO 5: SAÍDA ══ -->
+  <div class="pane" id="pane4">
+    <div class="output-box">
+      <div class="output-head">
+        <h2>✓ Solicitação registrada!</h2>
+        <p id="out-projeto-nome">—</p>
+      </div>
+      <div class="output-body">
+        <div class="output-grid">
+          <div class="output-card">
+            <div class="oc-icon green">📊</div>
+            <h3>Registro (base do dashboard)</h3>
+            <p>Os dados foram enviados para a planilha Google Sheets que alimentará o dashboard da diretoria.</p>
+            <span class="oc-status ok" id="sheets-status">✓ Salvo na planilha</span>
+          </div>
+          <div class="output-card">
+            <div class="oc-icon blue">📄</div>
+            <h3>Formulário Formal (Word)</h3>
+            <p>Documento RQ-1018 preenchido e pronto para enviar por e-mail ao aprovador.</p>
+            <span class="oc-status btn-dl" onclick="baixarWord()">⬇ Baixar .docx</span>
+          </div>
+        </div>
+
+        <div style="margin-bottom:14px;">
+          <div style="font-size:12px;font-weight:600;color:var(--muted);margin-bottom:8px;letter-spacing:.03em;">DADOS ENVIADOS PARA A PLANILHA (BASE DO DASH)</div>
+          <div class="sheets-preview">
+            <div class="sh-head" id="sh-head">Projeto | Prioridade | Tipo | Impede | Solicitante | Data | Custo (R$) | Prazo (d) | Esforço (h) | Status | Aprovador | GP | Data Aprovação</div>
+            <div id="sh-row">—</div>
+          </div>
+        </div>
+
+        <button class="btn btn-ghost" onclick="novasolicitacao()" style="width:100%;justify-content:center;">+ Nova Solicitação</button>
+      </div>
+    </div>
+  </div>
+
+</div><!-- /shell -->
+<div id="toast"></div>
+
+<script>
+// ── ESTADO ──────────────────────────────────────────────────────────
+let step = 0;
+let prioSel = null;
+let tipoSel = [];
+let impedeSel = false;
+let resultadoSel = null;
+let dadosEnviados = null;
+
+// ── NAVEGAÇÃO ───────────────────────────────────────────────────────
+function goStep(n) {
+  document.getElementById('pane'+step).classList.remove('active');
+  step = n;
+  document.getElementById('pane'+step).classList.add('active');
+  updateProgress();
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+
+function updateProgress() {
+  for(let i=0;i<4;i++){
+    const dot = document.getElementById('dot'+i);
+    const lbl = document.getElementById('lbl'+i);
+    dot.className = 'step-dot';
+    lbl.className = 'step-label';
+    if(i < step){ dot.classList.add('done'); lbl.classList.add('done'); }
+    else if(i === step){ dot.classList.add('active'); lbl.classList.add('active'); }
+    if(i < 3){
+      const line = document.getElementById('line'+i);
+      line.className = 'step-line' + (i < step ? ' done' : '');
+    }
+  }
+}
+
+function tryGoStep(n) { if(n <= step) goStep(n); }
+
+function nextStep(current) {
+  if(!validarPasso(current)) return;
+  goStep(current+1);
+}
+function prevStep(current) { goStep(current-1); }
+
+// ── VALIDAÇÃO ────────────────────────────────────────────────────────
+function validarPasso(n) {
+  if(n===0) {
+    if(!v('f-projeto'))  return toast('Informe o nome do projeto.','err');
+    if(!v('f-gp'))       return toast('Informe o nome do GP.','err');
+    if(!v('f-data'))     return toast('Informe a data da solicitação.','err');
+    if(!v('f-solicitante')) return toast('Informe o solicitante.','err');
+    if(!v('f-aprovador'))   return toast('Informe o aprovador.','err');
+    if(!prioSel)         return toast('Selecione a prioridade.','err');
+    if(!tipoSel.length)  return toast('Selecione pelo menos um tipo de mudança.','err');
+  }
+  if(n===1) {
+    if(!v('f-descricao'))    return toast('Preencha a descrição da solicitação.','err');
+    if(!v('f-justificativa')) return toast('Preencha a justificativa.','err');
+  }
+  if(n===3) {
+    if(!resultadoSel) return toast('Selecione o status da avaliação.','err');
+  }
+  return true;
+}
+function v(id){ return document.getElementById(id).value.trim(); }
+
+// ── PILLS ────────────────────────────────────────────────────────────
+function selPill(el, group) {
+  document.querySelectorAll('#prio-pills .pill').forEach(p => p.classList.remove('sel'));
+  el.classList.add('sel');
+  prioSel = el.textContent.trim();
+}
+function selPillMulti(el) {
+  el.classList.toggle('sel');
+  tipoSel = Array.from(document.querySelectorAll('#tipo-pills .pill.sel')).map(p => p.textContent.trim());
+}
+
+// ── TOGGLE ───────────────────────────────────────────────────────────
+function toggleImpede() {
+  impedeSel = !impedeSel;
+  const t = document.getElementById('toggle-impede');
+  const l = document.getElementById('toggle-label');
+  t.classList.toggle('on', impedeSel);
+  l.textContent = impedeSel ? 'Sim' : 'Não';
+}
+
+// ── RESULTADO ─────────────────────────────────────────────────────────
+function selResultado(val) {
+  resultadoSel = val;
+  ['aprovado','pendente','reprovado'].forEach(o => {
+    document.getElementById('opt-'+o).classList.remove('sel','aprovado','pendente','reprovado');
+  });
+  document.getElementById('opt-'+val).classList.add('sel', val);
+  document.getElementById('campo-data-aprov').style.display = val==='aprovado' ? 'block' : 'none';
+}
+
+// ── TOAST ─────────────────────────────────────────────────────────────
+function toast(msg, type='ok') {
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.className = 'show ' + (type==='err'?'err-toast':'ok-toast');
+  setTimeout(()=> el.className='', 3000);
+  return false;
+}
+
+// ── COLETAR DADOS ─────────────────────────────────────────────────────
+function coletarDados() {
+  return {
+    projeto:      v('f-projeto'),
+    gp:           v('f-gp'),
+    data:         v('f-data'),
+    solicitante:  v('f-solicitante'),
+    aprovador:    v('f-aprovador'),
+    responsavel:  v('f-responsavel') || v('f-solicitante'),
+    prioridade:   prioSel || '',
+    tipo:         tipoSel.join(', '),
+    impede:       impedeSel ? 'Sim' : 'Não',
+    descricao:    v('f-descricao'),
+    justificativa:v('f-justificativa'),
+    alternativas: v('f-alternativas') || 'n/a',
+    custo:        v('f-custo') || 'n/a',
+    prazo:        v('f-prazo') || 'n/a',
+    esforco:      v('f-esforco') || 'n/a',
+    riscos:       v('f-riscos') || 'n/a',
+    escopo:       v('f-escopo') || 'n/a',
+    qualidade:    v('f-qualidade') || 'n/a',
+    outros:       v('f-outros') || 'n/a',
+    diversos:     v('f-diversos') || 'n/a',
+    resultado:    resultadoSel || '',
+    dataAprov:    v('f-data-aprov') || '',
+    obs:          v('f-obs') || '',
+    timestamp:    new Date().toLocaleString('pt-BR'),
+  };
+}
+
+// ── ENVIAR ────────────────────────────────────────────────────────────
+async function enviarFormulario() {
+  if(!validarPasso(3)) return;
+  const btn = document.getElementById('btn-enviar');
+  const lbl = document.getElementById('btn-label');
+  btn.disabled = true;
+  lbl.innerHTML = '<span class="spinner"></span> Processando...';
+
+  dadosEnviados = coletarDados();
+  let sheetsOk = false;
+  const sheetsUrl = v('f-sheets-url');
+
+  // 1. Enviar para Google Sheets
+  if(sheetsUrl) {
+    try {
+      await fetch(sheetsUrl, {
+        method: 'POST',
+        mode: 'no-cors',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(dadosEnviados)
+      });
+      sheetsOk = true;
+    } catch(e) {
+      console.warn('Sheets:', e);
+    }
+  } else {
+    sheetsOk = false;
+  }
+
+  // 2. Mostrar tela de saída
+  mostrarSaida(dadosEnviados, sheetsOk);
+  btn.disabled = false;
+  lbl.textContent = 'Enviar e Gerar Documentos';
+}
+
+function mostrarSaida(d, sheetsOk) {
+  document.getElementById('out-projeto-nome').textContent = d.projeto + ' · ' + d.data;
+
+  const statusEl = document.getElementById('sheets-status');
+  if(sheetsOk) {
+    statusEl.textContent = '✓ Salvo na planilha';
+    statusEl.className = 'oc-status ok';
+  } else {
+    statusEl.textContent = '⚠ Sem URL configurada (modo teste)';
+    statusEl.className = 'oc-status';
+    statusEl.style.background = '#fef3c7';
+    statusEl.style.color = '#b45309';
+  }
+
+  const fmt = (val) => val && val !== 'n/a' ? val : 'n/a';
+  const custoFmt = d.custo && d.custo !== 'n/a'
+    ? 'R$ ' + parseFloat(d.custo).toLocaleString('pt-BR',{minimumFractionDigits:2})
+    : 'n/a';
+
+  document.getElementById('sh-row').textContent =
+    [d.projeto, d.prioridade, d.tipo, d.impede, d.solicitante,
+     d.data, custoFmt, d.prazo+'d', d.esforco+'h',
+     d.resultado, d.aprovador, d.gp, d.dataAprov||'—'].join(' | ');
+
+  goStep(4);
+  document.getElementById('pane4').classList.add('active');
+  document.getElementById('pane3').classList.remove('active');
+}
+
+// ── GERAR WORD ────────────────────────────────────────────────────────
+function baixarWord() {
+  if(!dadosEnviados) return;
+  const d = dadosEnviados;
+  const { Document, Packer, Paragraph, TextRun, Table, TableRow, TableCell,
+    AlignmentType, BorderStyle, WidthType, ShadingType, VerticalAlign } = docx;
+
+  const AZ   = "1F3864";
+  const CZ   = "F2F2F2";
+  const BR   = "FFFFFF";
+  const brd  = (c="CCCCCC") => ({ style: BorderStyle.SINGLE, size:4, color:c });
+  const brds = (c="CCCCCC") => ({ top:brd(c), bottom:brd(c), left:brd(c), right:brd(c) });
+
+  const cel = (txt, o={}) => new TableCell({
+    borders: brds(o.bc||"CCCCCC"),
+    width:{ size:o.w||4680, type:WidthType.DXA },
+    shading: o.sh ? {fill:o.sh, type:ShadingType.CLEAR} : undefined,
+    verticalAlign: VerticalAlign.CENTER,
+    margins:{top:80,bottom:80,left:140,right:140},
+    columnSpan: o.span,
+    rowSpan: o.rs,
+    children:[new Paragraph({
+      alignment: o.al||AlignmentType.LEFT,
+      children:[new TextRun({text:String(txt||''), font:"Calibri", size:o.sz||20, bold:o.b||false, color:o.co||"000000"})]
+    })]
+  });
+
+  const celH = (txt, span=1) => new TableCell({
+    borders:brds(AZ), width:{size:9360,type:WidthType.DXA},
+    shading:{fill:AZ,type:ShadingType.CLEAR},
+    verticalAlign:VerticalAlign.CENTER,
+    margins:{top:100,bottom:100,left:140,right:140}, columnSpan:span,
+    children:[new Paragraph({alignment:AlignmentType.LEFT,
+      children:[new TextRun({text:txt,font:"Calibri",size:22,bold:true,color:BR})]})]
+  });
+
+  const rH = (txt,span=2) => new TableRow({children:[celH(txt,span)]});
+  const rS = (lbl,val,lw=2340,vw=7020) => new TableRow({children:[
+    cel(lbl,{w:lw,sh:CZ,b:true}), cel(val,{w:vw})
+  ]});
+  const rD = (l1,v1,l2,v2) => new TableRow({children:[
+    cel(l1,{w:2340,sh:CZ,b:true}), cel(v1,{w:2340}),
+    cel(l2,{w:2340,sh:CZ,b:true}), cel(v2,{w:2340})
+  ]});
+  const rT = (txt) => new TableRow({
+    height:{value:1000,rule:"atLeast"},
+    children:[new TableCell({
+      borders:brds("CCCCCC"), width:{size:9360,type:WidthType.DXA},
+      columnSpan:2, margins:{top:100,bottom:100,left:140,right:140},
+      children:[new Paragraph({children:[new TextRun({text:txt||'n/a',font:"Calibri",size:20})]})]
+    })]
+  });
+  const rI = (lbl,val) => new TableRow({children:[
+    cel(lbl,{w:3120,sh:CZ,b:true}), cel(val||'n/a',{w:6240})
+  ]});
+  const sp = (pts=160) => new Paragraph({spacing:{before:0,after:pts},children:[]});
+
+  const custoFmt = d.custo && d.custo!=='n/a'
+    ? 'R$ '+parseFloat(d.custo).toLocaleString('pt-BR',{minimumFractionDigits:2})
+    : 'n/a';
+  const resultLabel = d.resultado==='aprovado' ? 'Aprovado' : d.resultado==='reprovado' ? 'Reprovado' : 'Pendente';
+  const checkAprov = d.resultado==='aprovado'?'☒':'☐';
+  const checkReprov = d.resultado==='reprovado'?'☒':'☐';
+
+  const document = new Document({
+    styles:{ default:{ document:{ run:{ font:"Calibri", size:20 } } } },
+    sections:[{
+      properties:{ page:{ size:{width:12240,height:15840}, margin:{top:720,right:720,bottom:720,left:720} } },
+      children:[
+        // CABEÇALHO
+        new Table({
+          width:{size:9360,type:WidthType.DXA}, columnWidths:[1560,6240,1560],
+          rows:[
+            new TableRow({children:[
+              new TableCell({borders:brds(AZ),width:{size:1560,type:WidthType.DXA},rowSpan:2,
+                verticalAlign:VerticalAlign.CENTER,margins:{top:80,bottom:80,left:100,right:100},
+                children:[new Paragraph({alignment:AlignmentType.CENTER,
+                  children:[new TextRun({text:"DB DIAGNÓSTICOS",font:"Calibri",size:16,bold:true,color:AZ})]})]}),
+              new TableCell({borders:brds(AZ),width:{size:6240,type:WidthType.DXA},
+                shading:{fill:AZ,type:ShadingType.CLEAR},verticalAlign:VerticalAlign.CENTER,margins:{top:80,bottom:80,left:140,right:140},
+                children:[new Paragraph({alignment:AlignmentType.CENTER,
+                  children:[new TextRun({text:"REGISTRO DA QUALIDADE",font:"Calibri",size:22,bold:true,color:BR})]})]}),
+              new TableCell({borders:brds(AZ),width:{size:1560,type:WidthType.DXA},rowSpan:2,
+                verticalAlign:VerticalAlign.CENTER,margins:{top:80,bottom:80,left:100,right:100},
+                children:[new Paragraph({alignment:AlignmentType.CENTER,
+                  children:[new TextRun({text:"VERSÃO: 2",font:"Calibri",size:18,bold:true})]})]}),
+            ]}),
+            new TableRow({children:[
+              new TableCell({borders:brds(AZ),width:{size:6240,type:WidthType.DXA},
+                verticalAlign:VerticalAlign.CENTER,margins:{top:60,bottom:60,left:140,right:140},
+                children:[new Paragraph({alignment:AlignmentType.CENTER,
+                  children:[new TextRun({text:"RQ-1018  –  Gestão de Mudanças",font:"Calibri",size:20,bold:true})]})]}),
+            ]}),
+          ]
+        }),
+        sp(200),
+        new Paragraph({alignment:AlignmentType.CENTER,spacing:{after:200},
+          children:[new TextRun({text:"Formulário de Gestão de Mudanças",font:"Calibri",size:26,bold:true})]}),
+
+        new Table({ width:{size:9360,type:WidthType.DXA}, columnWidths:[2340,7020], rows:[
+          rH("Informações do Projeto"),
+          rS("Nome do projeto",        d.projeto),
+          rS("Solicitante da mudança", d.solicitante),
+          rS("Aprovador (Sponsor)",    d.aprovador),
+          rS("Gerente de Projeto – DB",d.gp),
+          rS("Data da solicitação",    d.data),
+        ]}),
+        sp(160),
+
+        new Table({ width:{size:9360,type:WidthType.DXA}, columnWidths:[2340,2340,2340,2340], rows:[
+          new TableRow({children:[celH("Classificação da Mudança",4)]}),
+          rD("Prioridade",d.prioridade,"Tipo de mudança",d.tipo),
+          rD("Impede implantação?",d.impede,"Responsável",d.responsavel),
+        ]}),
+        sp(160),
+
+        new Table({ width:{size:9360,type:WidthType.DXA}, columnWidths:[9360], rows:[
+          new TableRow({children:[celH("Descrição da Solicitação da Mudança")]}),
+          rT(d.descricao),
+        ]}),
+        sp(160),
+
+        new Table({ width:{size:9360,type:WidthType.DXA}, columnWidths:[9360], rows:[
+          new TableRow({children:[celH("Justificativa(s) da Mudança")]}),
+          rT(d.justificativa),
+        ]}),
+        sp(160),
+
+        new Table({ width:{size:9360,type:WidthType.DXA}, columnWidths:[9360], rows:[
+          new TableRow({children:[celH("Alternativas")]}),
+          rT(d.alternativas||'n/a'),
+        ]}),
+        sp(160),
+
+        new Table({ width:{size:9360,type:WidthType.DXA}, columnWidths:[3120,6240], rows:[
+          new TableRow({children:[celH("Avaliação dos Impactos da Mudança",2)]}),
+          rI("Riscos identificados",         d.riscos),
+          rI("Impacto no prazo (dias)",      d.prazo==='n/a'?'n/a':d.prazo+' dias'),
+          rI("Impacto no custo (R$)",        custoFmt),
+          rI("Esforço estimado (horas)",     d.esforco==='n/a'?'n/a':d.esforco+' h'),
+          rI("Impacto no escopo da solução", d.escopo),
+          rI("Impacto na qualidade",         d.qualidade),
+          rI("Impacto em outros projetos",   d.outros),
+          rI("Impactos diversos no projeto", d.diversos),
+        ]}),
+        sp(160),
+
+        new Table({ width:{size:9360,type:WidthType.DXA}, columnWidths:[520,2080,6760], rows:[
+          new TableRow({children:[celH("Resultado da Avaliação",3)]}),
+          new TableRow({children:[
+            cel(checkAprov,{w:520,b:true,al:AlignmentType.CENTER}),
+            cel("Aprovado",{w:2080,sh:CZ,b:true}),
+            cel(d.resultado==='aprovado'?d.obs||'Aprovado.':'',{w:6760}),
+          ]}),
+          new TableRow({children:[
+            cel(checkReprov,{w:520,al:AlignmentType.CENTER}),
+            cel("Reprovado",{w:2080,sh:CZ,b:true}),
+            cel(d.resultado==='reprovado'?d.obs||'':' ',{w:6760}),
+          ]}),
+        ]}),
+        sp(160),
+
+        new Table({ width:{size:9360,type:WidthType.DXA}, columnWidths:[2340,1170,3510,2340], rows:[
+          new TableRow({children:[celH("Histórico de Revisões",4)]}),
+          new TableRow({children:[
+            cel("Data",{w:2340,sh:CZ,b:true,al:AlignmentType.CENTER}),
+            cel("Versão",{w:1170,sh:CZ,b:true,al:AlignmentType.CENTER}),
+            cel("Descrição",{w:3510,sh:CZ,b:true}),
+            cel("Autor",{w:2340,sh:CZ,b:true}),
+          ]}),
+          new TableRow({children:[
+            cel(d.data,{w:2340,al:AlignmentType.CENTER}),
+            cel("1",{w:1170,al:AlignmentType.CENTER}),
+            cel("Solicitação de mudança – "+d.tipo,{w:3510}),
+            cel(d.gp,{w:2340}),
+          ]}),
+        ]}),
+        sp(160),
+
+        new Table({ width:{size:9360,type:WidthType.DXA}, columnWidths:[2340,2340,2340,2340], rows:[
+          new TableRow({children:[celH("Aprovações",4)]}),
+          new TableRow({children:[
+            cel("Nome",{w:2340,sh:CZ,b:true}),
+            cel("Empresa/Área",{w:2340,sh:CZ,b:true}),
+            cel("Data",{w:2340,sh:CZ,b:true}),
+            cel("Assinatura",{w:2340,sh:CZ,b:true}),
+          ]}),
+          new TableRow({height:{value:700,rule:"atLeast"},children:[
+            cel("",{w:2340}),cel("",{w:2340}),cel("",{w:2340}),cel("",{w:2340}),
+          ]}),
+        ]}),
+        sp(200),
+
+        new Paragraph({alignment:AlignmentType.CENTER,
+          children:[new TextRun({text:"Página 1 de 1  ·  Referente à IT-0292 Escritório de Projetos  ·  Versão 2",
+            font:"Calibri",size:16,color:"888888"})]})
+      ]
+    }]
+  });
+
+  Packer.toBlob(document).then(blob => {
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'RQ-1018_' + d.projeto.replace(/\s+/g,'_') + '_' + d.data + '.docx';
+    a.click();
+    URL.revokeObjectURL(url);
+    toast('Word gerado com sucesso!','ok');
+  });
+}
+
+function novasolicitacao() {
+  location.reload();
+}
+
+// Data padrão = hoje
+document.getElementById('f-data').valueAsDate = new Date();
+</script>
+</body>
+</html>
